@@ -1,18 +1,28 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+import { InventoryPage } from '../pages/InventoryPage';
 
-test('usuario puede iniciar sesión exitosamente', async ({page})=>{
-    //1. Navegar a la pagina de prueba
-    await page.goto('https://www.saucedemo.com/');
+test.describe('Funcionalidad de Login', () => {
+  
+  test('Usuario estándar puede iniciar sesión exitosamente', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    const inventoryPage = new InventoryPage(page);
 
-    //2. Interactuar con los elementos(Llenar usuario y contraseña)
-    await page.locator('[data-test="username"]').fill('standard_user');
-    await page.locator('[data-test="password"]').fill('secret_sauce');
+    await loginPage.goto();
+    await loginPage.login('standard_user', 'secret_sauce');
 
-    //3. hacer clic en el botón login
-    await page.locator('[data-test="login-button"]').click();
+    await expect(page).toHaveURL('https://www.saucedemo.com/inventory.html');
+    await expect(inventoryPage.pageTitle).toHaveText('Products');
+  });
 
-    //4. Aserción ( Validación): Comprobar que estamos en la página de inventario
-    await expect(page).toHaveURL('httpa://www.saucedemo.com/inventory.html');
-    await expect(page.locator('.title')).toHaveText('Products');
+  test('Usuario bloqueado recibe mensaje de error', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+
+    await loginPage.goto();
+    await loginPage.login('locked_out_user', 'secret_sauce');
+
+    await expect(loginPage.errorMessage).toBeVisible();
+    await expect(loginPage.errorMessage).toContainText('Sorry, this user has been locked out.');
+  });
 
 });
